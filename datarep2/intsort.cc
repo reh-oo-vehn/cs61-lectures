@@ -5,17 +5,21 @@
 #include "print_bytes.hh"
 
 int main() {
-    std::vector<int> ints;
+    std::list<int> ints;
 
     // read integers from stdin, storing them in sorted order
     int input;
     while (fscanf(stdin, "%d", &input) == 1) {
-        auto it = std::lower_bound(ints.begin(), ints.end(), input);
+        auto it = ints.begin();
+        while (it != ints.end() && *it < input) {
+            ++it;
+        }
         ints.insert(it, input);
     }
 
     // print integers in sorted order
-    for (auto value : ints) {
-        fprintf(stdout, "%d\n", value);
+    for (auto& value : ints) {
+        //fprintf(stdout, "%d\n", value);
+        print_object(value);
     }
 }

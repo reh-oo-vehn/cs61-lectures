@@ -13,7 +13,7 @@ int main() {
     }
 
     // print integers in sorted order
-    for (auto kvpair : ints) {
+    for (auto& kvpair : ints) {
         // NB Elements of `std::map` are key-value pairs. We want the key.
         fprintf(stdout, "%d\n", kvpair.first);
     }

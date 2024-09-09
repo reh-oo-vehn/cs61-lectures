@@ -5,7 +5,7 @@
 #include "print_bytes.hh"
 
 int main() {
-    std::list<int> ints;
+    std::vector<int> ints;
 
     // read integers from stdin, storing them in sorted order
     int input;
@@ -18,7 +18,7 @@ int main() {
     }
 
     // print integers in sorted order
-    for (auto value : ints) {
+    for (auto& value : ints) {
         fprintf(stdout, "%d\n", value);
     }
 }

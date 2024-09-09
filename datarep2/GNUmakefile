@@ -1,17 +1,15 @@
-PROGRAMS = add addu addv intgen intsort intsort-binsearch intsort-tree intsort-vector
-all: add addu addv
+PROGRAMS = primitives segments locals functionlocals strings stringify std-stringify \
+	dynamic sizes \
+	intgen intsort intsort-binsearch intsort-tree intsort-vector
+all: $(PROGRAMS)
 
 include ../common/rules.mk
 
 %.o: %.cc $(BUILDSTAMP)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(DEPCFLAGS) $(O) -o $@ -c $<
 
-$(filter-out add,$(PROGRAMS)): \
+$(PROGRAMS): \
 %: %.o print_bytes.o
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(O) -o $@ $^
-
-add: \
-%: %.o addf.o print_bytes.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(O) -o $@ $^
 
 
