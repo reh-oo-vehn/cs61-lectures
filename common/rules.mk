@@ -115,6 +115,7 @@ SANFLAGS += -fsanitize=undefined -fno-sanitize-recover=undefined
  endif
 endif
 ifeq ($(or $(TSAN),$(LSAN),$(LEAKSAN),$(SAN)),1)
+CPPFLAGS += -DSAN=1
 CFLAGS += $(SANFLAGS)
 CXXFLAGS += $(SANFLAGS)
 endif

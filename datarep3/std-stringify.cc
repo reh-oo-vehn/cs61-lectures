@@ -8,9 +8,9 @@ std::string stringify(int i) {
     char buffer[4];
 
     assert(i >= 0 && i < 1000);
-    buffer[0] = '0' + (i / 100);
-    buffer[1] = '0' + ((i / 10) % 10);
-    buffer[2] = '0' + (i % 10);
+    buffer[0] = i / 100 + '0';
+    buffer[1] = (i / 10) % 10 + '0';
+    buffer[2] = i % 10 + '0';
     buffer[3] = '\0';
     print_bytes_ascii(buffer, strlen(buffer));
 

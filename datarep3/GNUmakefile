@@ -1,5 +1,6 @@
-PROGRAMS = primitives locals functionlocals strings stringify std-stringify \
-	dynamic sizes
+PROGRAMS = primitives segments functionlocals stringify std-stringify struct-stringify \
+	dynamic dynamic-reuse sizes vector-sum \
+	intgen intsort intsort-binsearch intsort-tree intsort-vector
 all: $(PROGRAMS)
 
 include ../common/rules.mk
