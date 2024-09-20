@@ -15,6 +15,7 @@ variants = $(1) $(addsuffix -noopt,$(1)) \
 	$(addsuffix -gcc,$(1)) $(addsuffix -gcc-noopt,$(1))
 
 NEED_CXX_GCC = 1
+NEED_CXX_CLANG = 1
 include ../common/rules.mk
 
 
@@ -25,7 +26,7 @@ include ../common/rules.mk
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(DEPCFLAGS) $(O) -o $@ -c $<
 
 %-clang.o: %.cc $(BUILDSTAMP)
-	clang++ $(CPPFLAGS) $(CXXFLAGS) $(O) $(DEPCFLAGS) -o $@ -c $<
+	$(CXX_CLANG) $(CLANG_CPPFLAGS) $(CPPFLAGS) $(CXXFLAGS) $(O) $(DEPCFLAGS) -o $@ -c $<
 
 %-gcc.o: %.cc $(BUILDSTAMP)
 	$(CXX_GCC) $(CPPFLAGS) $(CXXFLAGS) $(O) $(DEPCFLAGS) -o $@ -c $<
@@ -34,7 +35,7 @@ include ../common/rules.mk
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -O0 $(DEPCFLAGS) -o $@ -c $<
 
 %-clang-noopt.o: %.cc $(BUILDSTAMP)
-	clang++ $(CPPFLAGS) $(CXXFLAGS) -O0 $(DEPCFLAGS) -o $@ -c $<
+	$(CXX_CLANG) $(CLANG_CPPFLAGS) $(CPPFLAGS) $(CXXFLAGS) -O0 $(DEPCFLAGS) -o $@ -c $<
 
 %-gcc-noopt.o: %.cc $(BUILDSTAMP)
 	$(CXX_GCC) $(CPPFLAGS) $(CXXFLAGS) -O0 $(DEPCFLAGS) -o $@ -c $<
@@ -48,7 +49,7 @@ $(BASEPROGRAMS): \
 
 $(addsuffix -clang,$(BASEPROGRAMS)): \
 %: %.o hexdump.o
-	clang++ $(CXXFLAGS) $(LDFLAGS) $(O) -o $@ $^
+	$(CXX_CLANG) $(CXXFLAGS) $(LDFLAGS) $(O) -o $@ $^
 
 $(addsuffix -gcc,$(BASEPROGRAMS)): \
 %: %.o hexdump.o
@@ -64,7 +65,7 @@ $(addsuffix -gcc-noopt,$(BASEPROGRAMS)): \
 
 $(addsuffix -clang-noopt,$(BASEPROGRAMS)): \
 %: %.o hexdump.o
-	clang++ $(CXXFLAGS) $(LDFLAGS) -O0 -o $@ $^
+	$(CXX_CLANG) $(CXXFLAGS) $(LDFLAGS) -O0 -o $@ $^
 
 mb%: mb%.o mb-driver.o hexdump.o
 	$(CXX) $(CXXFLAGS) -pthread $(LDFLAGS) $(O) -o $@ $^

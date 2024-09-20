@@ -53,7 +53,7 @@ CXX = g++
  endif
 endif
 
-ISCLANG := $(shell if $(CC) --version 2>/dev/null | grep -e 'LLVM\|clang' >/dev/null; then echo 1; else echo 0; fi)
+ISCLANG := $(shell if $(CXX) --version 2>/dev/null | grep -e 'LLVM\|clang' >/dev/null; then echo 1; else echo 0; fi)
 ifeq ($(ISCLANG),1)
 BADCXXFLAGS ?= -fno-if-conversion -fno-if-conversion2
 endif
@@ -70,6 +70,24 @@ CXX_GCC = false
   endif
  else
 CXX_GCC = g++
+ endif
+endif
+
+CXX_CLANG ?= clang++
+ifeq ($(ISCLANG),1)
+NEED_CXX_CLANG := 1
+CXX_CLANG := $(CXX)
+endif
+ifeq ($(NEED_CXX_CLANG),1)
+ ifeq ($(shell if echo "#include <cassert>" | $(CXX_CLANG) -E -x c++ - >/dev/null 2>&1; then echo 1; else echo 0; fi),0)
+# Docker problem, 2024: extract C++ include path and gcc install dir from g++
+CLANGFIX_CPPFLAGS := $(shell c++ -E -x c++ -Wp,-v /dev/null 2>&1 | sed '/^ .*\/c[+][+]/!d;s/^ /-isystem /')
+CLANGFIX_LDFLAGS := --gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/$(shell c++ -v 2>&1 | sed '/^gcc version/!d;s/[^0-9]*//;s/\..*//')
+CXX_CLANG += $(CLANGFIX_CPPFLAGS) $(CLANGFIX_LDFLAGS)
+  ifeq ($(ISCLANG),1)
+CPPFLAGS += $(CLANGFIX_CPPFLAGS)
+LDFLAGS += $(CLANGFIX_LDFLAGS)
+  endif
  endif
 endif
 

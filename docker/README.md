@@ -78,7 +78,7 @@ $ ./cs61-run-docker
 cs61-user@a47f05ea5085:~/cs61-lectures$ uname
 Linux
 cs61-user@a47f05ea5085:~/cs61-lectures$ uname -a
-Linux a47f05ea5085 5.10.47-linuxkit #1 SMP PREEMPT Sat Jul 3 21:50:16 UTC 2021 x86_64 x86_64 x86_64 GNU/Linux
+Linux 8006bb91a43b 6.10.4-linuxkit #1 SMP PREEMPT_DYNAMIC Mon Aug 12 08:48:58 UTC 2024 x86_64 x86_64 x86_64 GNU/Linux
 cs61-user@a47f05ea5085:~/cs61-lectures$ ls
 common  cs61-run-docker  docker  README.md
 cs61-user@a47f05ea5085:~/cs61-lectures$ exit
@@ -126,7 +126,7 @@ cs61-lectures
 cs61-user@a15e6c4c8dbe:~$ echo "Hello, world"
 Hello, world
 cs61-user@a15e6c4c8dbe:~$ cs61-docker-version
-18
+19
 cs61-user@a15e6c4c8dbe:~$ exit
 exit
 $ 
