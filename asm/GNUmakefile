@@ -1,6 +1,6 @@
 PROGRAMS =
-BUILDABLEASM := $(patsubst %.cc,%.s,$(wildcard f*.cc)) \
-        $(patsubst src/%.cc,%.s,$(wildcard src/f*.cc)) \
+BUILDABLEASM := $(patsubst %.cc,%.s,$(wildcard f*.cc addf*.cc)) \
+        $(patsubst src/%.cc,%.s,$(wildcard src/f*.cc src/addf*.cc)) \
         $(patsubst %.cc,%.s,$(wildcard cc*.cc)) \
         $(patsubst src/%.cc,%.s,$(wildcard cc*.cc))
 all: $(PROGRAMS) $(BUILDABLEASM)
@@ -24,7 +24,10 @@ UNSAFEFLAGS := -U_FORTIFY_SOURCE -fno-stack-protector
 # from source files
 
 %.o: %.cc $(BUILDSTAMP)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(DEPCFLAGS) $(O) -o $@ -c $<
+	$(call flagged_compile_c,$<,$@,$(CXXFLAGS))
+
+%.o: src/%.cc $(BUILDSTAMP)
+	$(call flagged_compile_c,$<,$@,$(CXXFLAGS))
 
 %-clang.o: %.cc $(BUILDSTAMP)
 	clang++ $(CPPFLAGS) $(CXXFLAGS) $(O) $(DEPCFLAGS) -o $@ -c $<
