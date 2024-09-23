@@ -74,12 +74,13 @@ CXX_GCC = g++
 endif
 
 CXX_CLANG ?= clang++
+hash := $(shell printf '\043')
 ifeq ($(ISCLANG),1)
 NEED_CXX_CLANG := 1
 CXX_CLANG := $(CXX)
 endif
 ifeq ($(NEED_CXX_CLANG),1)
- ifeq ($(shell if echo "#include <cassert>" | $(CXX_CLANG) -E -x c++ - >/dev/null 2>&1; then echo 1; else echo 0; fi),0)
+ ifeq ($(shell if echo "$(hash)include <cassert>" | $(CXX_CLANG) -E -x c++ - >/dev/null 2>&1; then echo 1; else echo 0; fi),0)
 # Docker problem, 2024: extract C++ include path and gcc install dir from g++
 CLANGFIX_CPPFLAGS := $(shell c++ -E -x c++ -Wp,-v /dev/null 2>&1 | sed '/^ .*\/c[+][+]/!d;s/^ /-isystem /')
 CLANGFIX_LDFLAGS := --gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/$(shell c++ -v 2>&1 | sed '/^gcc version/!d;s/[^0-9]*//;s/\..*//')
