@@ -1,6 +1,6 @@
 PROGRAMS =
-BUILDABLEASM := $(patsubst %.cc,%.s,$(wildcard f*.cc addf*.cc)) \
-        $(patsubst src/%.cc,%.s,$(wildcard src/f*.cc src/addf*.cc)) \
+BUILDABLEASM := $(patsubst %.cc,%.s,$(wildcard f*.cc *f*.cc)) \
+        $(patsubst src/%.cc,%.s,$(wildcard src/f*.cc src/*f*.cc)) \
         $(patsubst %.cc,%.s,$(wildcard cc*.cc)) \
         $(patsubst src/%.cc,%.s,$(wildcard cc*.cc))
 all: $(PROGRAMS) $(BUILDABLEASM)
