@@ -1,10 +1,10 @@
-//! -O3 -fno-tree-vectorize
-#include <vector>
+//! -O0 -fno-tree-vectorize
+#include <cstddef>
 
-int vecsum(std::vector<int>& v) {
+int vecsum(int* data, size_t n) {
     int sum = 0;
-    for (auto& i : v) {
-        sum += i;
+    for (size_t i = 0; i != n; ++i) {
+        sum += data[i];
     }
     return sum;
 }
