@@ -1,11 +1,11 @@
-PROGRAMS =
+PROGRAMS = print
 BUILDABLEASM := $(patsubst %.cc,%.s,$(wildcard f*.cc *f*.cc)) \
         $(patsubst src/%.cc,%.s,$(wildcard src/f*.cc src/*f*.cc)) \
         $(patsubst %.cc,%.s,$(wildcard cc*.cc)) \
         $(patsubst src/%.cc,%.s,$(wildcard cc*.cc))
 all: $(PROGRAMS) $(BUILDABLEASM)
 
-BASEPROGRAMS = none
+BASEPROGRAMS = print
 ALLPROGRAMS = $(PROGRAMS)
 
 variants = $(1) $(addsuffix -noopt,$(1)) \
@@ -15,6 +15,7 @@ variants = $(1) $(addsuffix -noopt,$(1)) \
 NEED_CXX_GCC = 1
 PIE ?= 0
 SAN ?= 0
+STATIC ?= 1
 include ../common/rules.mk
 
 UNSAFEFLAGS := -U_FORTIFY_SOURCE -fno-stack-protector
@@ -68,27 +69,27 @@ UNSAFEFLAGS := -U_FORTIFY_SOURCE -fno-stack-protector
 # Rules for making executables (runnable programs) from object files
 
 $(BASEPROGRAMS): \
-%: %.o hexdump.o
+%: %.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(O) -o $@ $^
 
 $(addsuffix -clang,$(BASEPROGRAMS)): \
-%: %.o hexdump.o
+%: %.o
 	clang++ $(CXXFLAGS) $(LDFLAGS) $(O) -o $@ $^
 
 $(addsuffix -gcc,$(BASEPROGRAMS)): \
-%: %.o hexdump.o
+%: %.o
 	$(CXX_GCC) $(CXXFLAGS) $(LDFLAGS) $(O) -o $@ $^
 
 $(addsuffix -noopt,$(BASEPROGRAMS)): \
-%: %.o hexdump.o
+%: %.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -O0 -o $@ $^
 
 $(addsuffix -gcc-noopt,$(BASEPROGRAMS)): \
-%: %.o hexdump.o
+%: %.o
 	$(CXX_GCC) $(CXXFLAGS) $(LDFLAGS) -O0 -o $@ $^
 
 $(addsuffix -clang-noopt,$(BASEPROGRAMS)): \
-%: %.o hexdump.o
+%: %.o
 	clang++ $(CXXFLAGS) $(LDFLAGS) -O0 -o $@ $^
 
 

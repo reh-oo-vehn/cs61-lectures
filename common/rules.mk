@@ -19,6 +19,11 @@ ifeq ($(PIE),0)
 LDFLAGS += -no-pie
 endif
 
+STATIC ?= 0
+ifeq ($(STATIC),1)
+LDFLAGS += -static
+endif
+
 # skip x86 versions in ARM Docker
 X86 ?= 1
 ifneq ($(X86),1)
