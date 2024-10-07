@@ -237,14 +237,22 @@ inline bool is_error(uintptr_t r) {
 }
 
 
+// Maximum number of processes
+
+#ifndef PID_MAX
+#define PID_MAX         16
+#endif
+
+
 // CGA console printing
 
-#define CPOS(row, col)  ((row) * 80 + (col))
-#define CROW(cpos)      ((cpos) / 80)
-#define CCOL(cpos)      ((cpos) % 80)
+#define CONSOLE_COLUMNS     80
+#define CONSOLE_ROWS        25
+#define CPOS(row, col)      ((row) * 80 + (col))
+#define CROW(cpos)          ((cpos) / 80)
+#define CCOL(cpos)          ((cpos) % 80)
+#define END_CPOS            (CONSOLE_ROWS * CONSOLE_COLUMNS)
 
-#define CONSOLE_COLUMNS 80
-#define CONSOLE_ROWS    25
 extern volatile uint16_t console[CONSOLE_ROWS * CONSOLE_COLUMNS];
 
 // current position of the cursor (80 * ROW + COL)
@@ -254,7 +262,9 @@ extern volatile int cursorpos;
 //    Erases the console and moves the cursor to the upper left (CPOS(0, 0)).
 void console_clear();
 
-#define COLOR_ERROR 0xC000
+#define COLOR_ERROR         0xC000      // black on red
+#define COLOR_SUCCESS       0x0A00      // green on black
+#define COLOR_NORMAL        0x0700      // gray on black
 
 
 // console_puts(cursor, color, s, len)
@@ -281,9 +291,9 @@ int console_puts(int cpos, int color, const char* s, size_t len);
 //    The `cursor` argument is a cursor position, such as `CPOS(r, c)` for
 //    row number `r` and column number `c`.
 //
-//    The `color` argument is the initial color used to print. 0x0700 is a
-//    good choice (grey on black). The `format` escape %C changes the color
-//    being printed; it takes an integer from the parameter list.
+//    The `color` argument is the initial color used to print. 0x0700
+//    (COLOR_NORMAL) is the default gray on black. The `format` escape %C
+//    changes the current color; it takes an integer from the parameter list.
 //
 //    Returns the final position of the cursor.
 int console_printf(int cpos, int color, const char* format, ...);
@@ -300,8 +310,19 @@ void console_printf(const char* format, ...);
 // Generic print library
 
 struct printer {
-    virtual void putc(unsigned char c, int color) = 0;
-    void vprintf(int color, const char* format, va_list val);
+    int color_ = COLOR_NORMAL;
+    virtual void putc(unsigned char c) = 0;
+    void printf(const char* format, ...);
+    void vprintf(const char* format, va_list val);
+};
+
+struct console_printer : public printer {
+    volatile uint16_t* cell_;
+    bool scroll_;
+    console_printer(int cpos, bool scroll, int color = COLOR_NORMAL);
+    void putc(unsigned char c) override;
+    void scroll();
+    void move_cursor();
 };
 
 
@@ -309,9 +330,9 @@ struct printer {
 //    Like `console_printf`, but `color` defaults to `COLOR_ERROR`, and
 //    in the kernel, the message is also printed to the log.
 [[gnu::noinline, gnu::cold]]
-int error_printf(int cpos, int color, const char* format, ...);
+void error_printf(int cpos, int color, const char* format, ...);
 [[gnu::noinline, gnu::cold]]
-int error_vprintf(int cpos, int color, const char* format, va_list val);
+void error_vprintf(int cpos, int color, const char* format, va_list val);
 [[gnu::noinline, gnu::cold]]
 void error_printf(int color, const char* format, ...);
 [[gnu::noinline, gnu::cold]]

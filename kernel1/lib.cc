@@ -1,5 +1,6 @@
 #include "lib.hh"
 #include "x86-64.h"
+#include <atomic>
 #if WEENSYOS_KERNEL
 # include "kernel.hh"
 #endif
@@ -301,15 +302,18 @@ from_chars_result from_chars(const char* first, const char* last,
 
 // rand, srand
 
-static int rand_seed_set;
-static unsigned long rand_seed;
+static std::atomic<int> rand_seed_set;
+static std::atomic<unsigned long> rand_seed;
 
 int rand() {
     if (!rand_seed_set) {
         srand(819234718U);
     }
-    rand_seed = rand_seed * 6364136223846793005UL + 1;
-    return (rand_seed >> 32) & RAND_MAX;
+    unsigned long rs = rand_seed, next_rs;
+    do {
+        next_rs = rs * 6364136223846793005UL + 1;
+    } while (!rand_seed.compare_exchange_weak(rs, next_rs));
+    return (next_rs >> 33) & RAND_MAX;
 }
 
 void srand(unsigned seed) {
@@ -318,15 +322,22 @@ void srand(unsigned seed) {
 }
 
 // rand(min, max)
-//    Return a pseudorandom number roughly evenly distributed between
+//    Return a pseudorandom number evenly distributed between
 //    `min` and `max`, inclusive. Requires `min <= max` and
 //    `max - min <= RAND_MAX`.
 int rand(int min, int max) {
     assert(min <= max);
     assert(max - min <= RAND_MAX);
 
-    unsigned long r = rand();
-    return min + (r * (max - min + 1)) / ((unsigned long) RAND_MAX + 1);
+    unsigned div = (unsigned(RAND_MAX) + 1) / (max - min + 1),
+        top = div * (max - min + 1);
+    assert(top > 0 && top <= unsigned(RAND_MAX) + 1);
+    while (true) {
+        unsigned r = rand();
+        if (r < top) {
+            return min + r / div;
+        }
+    }
 }
 
 
@@ -391,13 +402,20 @@ static char* print_number(char* buf, size_t sz,
     return pos;
 }
 
-void printer::vprintf(int color, const char* format, va_list val) {
+void printer::printf(const char* format, ...) {
+    va_list val;
+    va_start(val, format);
+    vprintf(format, val);
+    va_end(val);
+}
+
+void printer::vprintf(const char* format, va_list val) {
 #define NUMBUFSIZ 32
     char numbuf[NUMBUFSIZ];
 
     for (; *format; ++format) {
         if (*format != '%') {
-            putc(*format, color);
+            putc(*format);
             continue;
         }
 
@@ -488,7 +506,7 @@ void printer::vprintf(int color, const char* format, va_list val) {
             data = va_arg(val, char*);
             break;
         case 'C':
-            color = va_arg(val, int);
+            color_ = va_arg(val, int);
             continue;
         case 'c':
             data = numbuf;
@@ -546,19 +564,19 @@ void printer::vprintf(int color, const char* format, va_list val) {
 
         width -= datalen + zeros + strlen(prefix);
         for (; !(flags & FLAG_LEFTJUSTIFY) && width > 0; --width) {
-            putc(' ', color);
+            putc(' ');
         }
         for (; *prefix; ++prefix) {
-            putc(*prefix, color);
+            putc(*prefix);
         }
         for (; zeros > 0; --zeros) {
-            putc('0', color);
+            putc('0');
         }
         for (; datalen > 0; ++data, --datalen) {
-            putc(*data, color);
+            putc(*data);
         }
         for (; width > 0; --width) {
-            putc(' ', color);
+            putc(' ');
         }
     }
 }
@@ -574,7 +592,7 @@ struct string_printer : public printer {
     string_printer(char* s, size_t size)
         : s_(s), end_(s + size), n_(0) {
     }
-    void putc(unsigned char c, int) override {
+    void putc(unsigned char c) override {
         if (s_ < end_) {
             *s_++ = c;
         }
@@ -584,7 +602,7 @@ struct string_printer : public printer {
 
 ssize_t vsnprintf(char* s, size_t size, const char* format, va_list val) {
     string_printer sp(s, size);
-    sp.vprintf(0, format, val);
+    sp.vprintf(format, val);
     if (size && sp.s_ < sp.end_) {
         *sp.s_ = 0;
     } else if (size) {
@@ -616,18 +634,10 @@ void console_clear() {
 // console_puts
 //    Put a string to the console, starting at the given cursor position.
 
-struct console_printer : public printer {
-    volatile uint16_t* cell_;
-    bool scroll_;
-    console_printer(int cpos, bool scroll);
-    inline void putc(unsigned char c, int color) override;
-    void scroll();
-    void move_cursor();
-};
-
-[[gnu::noinline]]
-console_printer::console_printer(int cpos, bool scroll)
+__noinline
+console_printer::console_printer(int cpos, bool scroll, int color)
     : cell_(console), scroll_(scroll) {
+    color_ = color;
     if (cpos < 0) {
         cell_ += cursorpos;
     } else if (cpos <= CONSOLE_ROWS * CONSOLE_COLUMNS) {
@@ -635,18 +645,15 @@ console_printer::console_printer(int cpos, bool scroll)
     }
 }
 
-[[gnu::noinline]]
+__noinline
 void console_printer::scroll() {
-    assert(cell_ >= console + CONSOLE_ROWS * CONSOLE_COLUMNS);
+    assert(cell_ >= console + END_CPOS);
     if (scroll_) {
-        int i = 0;
-        while (i != (CONSOLE_ROWS - 1) * CONSOLE_COLUMNS) {
+        for (int i = 0; i != END_CPOS - CONSOLE_COLUMNS; ++i) {
             console[i] = console[i + CONSOLE_COLUMNS];
-            ++i;
         }
-        while (i != CONSOLE_ROWS * CONSOLE_COLUMNS) {
+        for (int i = END_CPOS - CONSOLE_COLUMNS; i != END_CPOS; ++i) {
             console[i] = 0;
-            ++i;
         }
         cell_ -= CONSOLE_COLUMNS;
     } else {
@@ -654,7 +661,7 @@ void console_printer::scroll() {
     }
 }
 
-[[gnu::noinline]]
+__noinline
 void console_printer::move_cursor() {
     cursorpos = cell_ - console;
 #if WEENSYOS_KERNEL
@@ -663,26 +670,26 @@ void console_printer::move_cursor() {
 #endif
 }
 
-inline void console_printer::putc(unsigned char c, int color) {
-    while (cell_ >= console + CONSOLE_ROWS * CONSOLE_COLUMNS) {
+void console_printer::putc(unsigned char c) {
+    while (cell_ >= console + END_CPOS) {
         scroll();
     }
     if (c == '\n') {
         int pos = (cell_ - console) % 80;
         while (pos != 80) {
-            *cell_++ = ' ' | color;
+            *cell_++ = ' ' | color_;
             ++pos;
         }
     } else {
-        *cell_++ = c | color;
+        *cell_++ = c | color_;
     }
 }
 
-[[gnu::noinline]]
+__noinline
 int console_puts(int cpos, int color, const char* s, size_t len) {
-    console_printer cp(cpos, cpos < 0);
+    console_printer cp(cpos, cpos < 0, color);
     while (len > 0) {
-        cp.putc(*s, color);
+        cp.putc(*s);
         ++s;
         --len;
     }
@@ -696,17 +703,17 @@ int console_puts(int cpos, int color, const char* s, size_t len) {
 // console_vprintf, console_printf
 //    Print a message onto the console, starting at the given cursor position.
 
-[[gnu::noinline]]
+__noinline
 int console_vprintf(int cpos, int color, const char* format, va_list val) {
-    console_printer cp(cpos, cpos < 0);
-    cp.vprintf(color, format, val);
+    console_printer cp(cpos, cpos < 0, color);
+    cp.vprintf(format, val);
     if (cpos < 0) {
         cp.move_cursor();
     }
     return cp.cell_ - console;
 }
 
-[[gnu::noinline]]
+__noinline
 int console_printf(int cpos, int color, const char* format, ...) {
     va_list val;
     va_start(val, format);
@@ -715,7 +722,7 @@ int console_printf(int cpos, int color, const char* format, ...) {
     return cpos;
 }
 
-[[gnu::noinline]]
+__noinline
 void console_printf(int color, const char* format, ...) {
     va_list val;
     va_start(val, format);
@@ -723,7 +730,7 @@ void console_printf(int color, const char* format, ...) {
     va_end(val);
 }
 
-[[gnu::noinline]]
+__noinline
 void console_printf(const char* format, ...) {
     va_list val;
     va_start(val, format);
@@ -734,16 +741,15 @@ void console_printf(const char* format, ...) {
 
 // k-hardware.cc/u-lib.cc supply error_vprintf
 
-[[gnu::noinline]]
-int error_printf(int cpos, int color, const char* format, ...) {
+__noinline
+void error_printf(int cpos, int color, const char* format, ...) {
     va_list val;
     va_start(val, format);
-    cpos = error_vprintf(cpos, color, format, val);
+    error_vprintf(cpos, color, format, val);
     va_end(val);
-    return cpos;
 }
 
-[[gnu::noinline]]
+__noinline
 void error_printf(int color, const char* format, ...) {
     va_list val;
     va_start(val, format);
@@ -751,7 +757,7 @@ void error_printf(int color, const char* format, ...) {
     va_end(val);
 }
 
-[[gnu::noinline]]
+__noinline
 void error_printf(const char* format, ...) {
     va_list val;
     va_start(val, format);

@@ -2,7 +2,7 @@
 #include "k-apic.hh"
 #include "k-vmiter.hh"
 #include "obj/k-firstprocess.h"
-#include "atomic.hh"
+#include <atomic>
 
 // kernel.cc
 //
@@ -24,12 +24,12 @@
 
 #define PROC_SIZE 0x40000       // initial state only
 
-proc ptable[NPROC];             // array of process descriptors
+proc ptable[PID_MAX];           // array of process descriptors
                                 // Note that `ptable[0]` is never used.
 proc* current;                  // pointer to currently executing proc
 
 #define HZ 100                  // timer interrupt frequency (interrupts/sec)
-[[maybe_unused]] static atomic<unsigned long> ticks; // # timer interrupts so far
+[[maybe_unused]] static std::atomic<unsigned long> ticks; // # timer interrupts so far
 
 
 // Memory state - see `kernel.hh`
@@ -72,7 +72,7 @@ void kernel_start(const char* command) {
     }
 
     // set up process descriptors
-    for (pid_t i = 0; i < NPROC; i++) {
+    for (pid_t i = 0; i < PID_MAX; i++) {
         ptable[i].pid = i;
         ptable[i].state = P_FREE;
     }
@@ -298,11 +298,11 @@ uintptr_t syscall(regstate* regs) {
 void schedule() {
     pid_t pid = current->pid;
     for (unsigned spins = 1; true; ++spins) {
-        pid = (pid + 1) % NPROC;
+        pid = (pid + 1) % PID_MAX;
         if (ptable[pid].state == P_RUNNABLE) {
             run(&ptable[pid]);
         }
-        if (spins > NPROC) {
+        if (spins > PID_MAX) {
             panic("No runnable processes!");
         }
 

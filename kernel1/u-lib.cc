@@ -70,8 +70,8 @@ void panic(const char* format, ...) {
     sys_panic(buf);
 }
 
-int error_vprintf(int cpos, int color, const char* format, va_list val) {
-    return console_vprintf(cpos, color, format, val);
+void error_vprintf(int cpos, int color, const char* format, va_list val) {
+    console_vprintf(cpos, color, format, val);
 }
 
 void assert_fail(const char* file, int line, const char* msg,

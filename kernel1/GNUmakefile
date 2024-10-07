@@ -97,20 +97,20 @@ endif
 # How to make object files
 
 $(OBJDIR)/%.ko: %.cc $(KERNELBUILDSTAMPS)
-	$(call cxxcompile,$(KERNELCXXFLAGS) -O1 -DWEENSYOS_KERNEL -c $< -o $@,COMPILE $<)
+	$(call cxxcompile,-O1 $(KERNELCXXFLAGS) -DWEENSYOS_KERNEL -c $< -o $@,COMPILE $<)
 
 $(OBJDIR)/%.ko: %.S $(OBJDIR)/k-asm.h $(KERNELBUILDSTAMPS)
 	$(call assemble,-O2 -c $< -o $@,ASSEMBLE $<)
 
 $(OBJDIR)/boot.o: $(OBJDIR)/%.o: boot.cc $(KERNELBUILDSTAMPS)
-	$(call cxxcompile,$(CXXFLAGS) -Os -fomit-frame-pointer -c $< -o $@,COMPILE $<)
+	$(call cxxcompile,-Os $(CXXFLAGS) -fomit-frame-pointer -c $< -o $@,COMPILE $<)
 
 $(OBJDIR)/bootentry.o: $(OBJDIR)/%.o: \
 	bootentry.S $(OBJDIR)/k-asm.h $(KERNELBUILDSTAMPS)
 	$(call assemble,-Os -fomit-frame-pointer -c $< -o $@,ASSEMBLE $<)
 
 $(OBJDIR)/%.uo: %.cc $(BUILDSTAMPS)
-	$(call cxxcompile,$(CXXFLAGS) -O1 -DWEENSYOS_PROCESS -c $< -o $@,COMPILE $<)
+	$(call cxxcompile,-O1 $(CXXFLAGS) -DWEENSYOS_PROCESS -c $< -o $@,COMPILE $<)
 
 $(OBJDIR)/%.uo: %.S $(OBJDIR)/u-asm.h $(BUILDSTAMPS)
 	$(call assemble,-O2 -c $< -o $@,ASSEMBLE $<)

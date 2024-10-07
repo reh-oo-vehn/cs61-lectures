@@ -79,25 +79,24 @@ $(OBJDIR)/stamp $(BUILDSTAMP):
 	$(call run,mkdir -p $(@D))
 	$(call run,touch $@)
 
-k_asm_h_input_command := $(CXX) $(CPPFLAGS) $(KERNELCXXFLAGS) -DCHICKADEE_KERNEL -dM -E kernel.hh
-u_asm_h_input_command := $(CXX) $(CPPFLAGS) $(CXXFLAGS) -DCHICKADEE_PROCESS -dM -E u-lib.hh
+k_asm_h_input_command := $(CXX) $(CPPFLAGS) $(KERNELCXXFLAGS) -DWEENSYOS_KERNEL -dM -E kernel.hh
+u_asm_h_input_command := $(CXX) $(CPPFLAGS) $(CXXFLAGS) -DWEENSYOS_PROCESS -dM -E u-lib.hh
 asm_h_build_command := awk -f build/mkkernelasm.awk | sort
 
-DEP_ASM_HEADERS := $(shell \
-	mkdir -p $(OBJDIR); \
+ifneq ($(wildcard $(OBJDIR)/k-asm.h),)
+DEPCHECK_K_ASM_H := $(shell \
 	$(k_asm_h_input_command) | $(asm_h_build_command) > $(OBJDIR)/k-asm.h1; \
-	cmp $(OBJDIR)/k-asm.h $(OBJDIR)/k-asm.h1 >/dev/null 2>&1 || rm -f $(OBJDIR)/k-asm.h; \
+	cmp $(OBJDIR)/k-asm.h $(OBJDIR)/k-asm.h1 >/dev/null 2>&1 || rm -f $(OBJDIR)/k-asm.h)
+endif
+ifneq ($(wildcard $(OBJDIR)/u-asm.h),)
+DEPCHECK_U_ASM_H := $(shell \
 	$(u_asm_h_input_command) | $(asm_h_build_command) > $(OBJDIR)/u-asm.h1; \
 	cmp $(OBJDIR)/u-asm.h $(OBJDIR)/u-asm.h1 >/dev/null 2>&1 || rm -f $(OBJDIR)/u-asm.h)
+endif
 
 ifneq ($(strip $(PROCESSES)),$(DEP_PROCESSES))
 PROCESSES_BUILDSTAMP := $(shell echo "DEP_PROCESSES:=$(strip $(PROCESSES))" > $(DEPSDIR)/_processes.d; echo always)
 endif
-
-ifneq ($(strip $(DISKFS_CONTENTS)),$(DEP_DISKFS_CONTENTS))
-DISKFS_BUILDSTAMP := $(shell echo "DEP_DISKFS_CONTENTS:=$(strip $(DISKFS_CONTENTS))" > $(DEPSDIR)/_diskfs.d; echo always)
-endif
-
 
 # Qemu emulator
 QEMU ?= qemu-system-x86_64
@@ -141,7 +140,7 @@ check-qemu: $(QEMU_PRELOAD_LIBRARY) check-qemu-console
 
 # Delete the build
 clean:
-	$(call run,rm -rf $(DEPSDIR) $(OBJDIR) *.img core *.core attack,CLEAN)
+	$(call run,rm -rf $(DEPSDIR) $(OBJDIR) *.img core *.core,CLEAN)
 
 realclean: clean
 	$(call run,rm -rf $(DISTDIR)-$(USER).tar.gz $(DISTDIR)-$(USER))
