@@ -59,14 +59,16 @@ void kernel_start(const char* command) {
     console_clear();
 
     // (re-)initialize kernel page table
-    for (uintptr_t addr = 0; addr < MEMSIZE_PHYSICAL; addr += PAGESIZE) {
+    vmiter it(kernel_pagetable, 0);
+    for (; it.va() < MEMSIZE_PHYSICAL; it += PAGESIZE) {
+        uintptr_t addr = it.va();
         int perm = PTE_P | PTE_W | PTE_U;
         if (addr == 0) {
             // nullptr is inaccessible even to the kernel
             perm = 0;
         }
         // install identity mapping
-        int r = vmiter(kernel_pagetable, addr).try_map(addr, perm);
+        int r = it.try_map(addr, perm);
         assert(r == 0); // mappings during kernel_start MUST NOT fail
                         // (Note that later mappings might fail!!)
     }
