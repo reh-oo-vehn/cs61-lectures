@@ -1,4 +1,5 @@
-BASEPROGRAMS = $(sort $(patsubst %.cc,%,$(wildcard [rw]-*.cc))) coherence
+BASEPROGRAMS = $(sort $(patsubst %.cc,%,$(wildcard [rw]-*.cc))) \
+	coherence fork1 fork2 forkmix
 PROGRAMS = $(BASEPROGRAMS)
 all: $(PROGRAMS) $(DATAFILE)
 

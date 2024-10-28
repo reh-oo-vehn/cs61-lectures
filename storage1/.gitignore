@@ -13,3 +13,7 @@ r-exitbyte
 [rw]-stdiobyterev
 [rw]-stdioblock
 [rw]-stdioblockrev
+fork1
+fork2
+forkmix
+test.txt
