@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cassert>
-#include <unistd.h>
+#include "unistd.h"
 
 int main(int argc, char* argv[]) {
     FILE* f = stdout;
@@ -22,8 +22,9 @@ int main(int argc, char* argv[]) {
         identity = "mama\n";
     }
 
-    // print process’s identity 1,000,000 times
+    // print process’s identity 1,000,000 times, using system calls
     for (int i = 0; i != 1000000; ++i) {
-        fputs(identity, f);
+        ssize_t nw = write(fileno(f), identity, 5);
+        assert(nw == 5);
     }
 }
