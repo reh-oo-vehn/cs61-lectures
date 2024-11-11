@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
         if (work_time > 0) {
             dsleep(work_time);
         }
-        exit(0);
+        _exit(0);
     }
 
     // Wait for timeout or child exit, whichever happens first

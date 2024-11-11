@@ -1,6 +1,7 @@
 PROGRAMS = forkmix syscall-forkmix forkorder minishell \
 	makezombies pipesizer selfpipe childpipe waitdemo \
-	racer-poll racer-block racer-blockvar racer-selfpipe
+	racer-poll racer-block racer-blockvar racer-selfpipe \
+	racer-alarm racer-selectpipe racer-waitblockwait
 
 all: $(PROGRAMS)
 
@@ -16,7 +17,8 @@ include ../common/rules.mk
 
 processex fork1 fork2 fork3 forkmix syscall-forkmix forkorder minishell \
 makezombies pipesizer selfpipe childpipe waitdemo \
-racer-poll racer-block racer-blockvar racer-selfpipe: \
+racer-poll racer-block racer-blockvar racer-selfpipe \
+racer-alarm racer-selectpipe racer-signalfd racer-threads racer-waitblockwait: \
 %: %.o print_bytes.o
 	$(CXX) $(CXXFLAGS) $(O) $(LDFLAGS) -o $@ $^ $(LIBS)
 

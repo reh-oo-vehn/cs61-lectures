@@ -16,17 +16,7 @@
 #include <sys/select.h>
 #include <sched.h>
 #include <errno.h>
-
-// timestamp()
-//    Return current time in seconds since January 1, 1970 UTC.
-
-inline double timestamp() {
-    struct timespec ts;
-    int r = clock_gettime(CLOCK_REALTIME, &ts);
-    assert(r >= 0);
-    return ts.tv_sec + ts.tv_nsec * 1e-9;
-}
-
+#include "print_bytes.hh"
 
 // dsleep(t)
 //    Sleep for `t` seconds.
@@ -37,18 +27,18 @@ inline int dsleep(double t) {
 }
 
 
-// racer_fork(delay)
-//    Create a child process that exits after `delay` seconds. Returns the
+// racer_fork(work_time)
+//    Create a child process that exits after `work_time` seconds. Returns the
 //    child process’s pid.
 
-inline pid_t racer_fork(double delay) {
+inline pid_t racer_fork(double work_time) {
     pid_t p = fork();
     assert(p >= 0);
     if (p == 0) {
-        if (delay > 0) {
-            dsleep(delay);
+        if (work_time > 0) {
+            dsleep(work_time);
         }
-        exit(0);
+        _exit(0);
     }
     return p;
 }
