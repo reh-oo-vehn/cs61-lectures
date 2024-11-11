@@ -14,3 +14,7 @@ processex
 selfpipe
 syscall-forkmix
 waitdemo
+racer-block
+racer-blockvar
+racer-poll
+racer-selfpipe
