@@ -10,6 +10,7 @@
 #include <csignal>
 #include <ctime>
 #include <string>
+#include <format>
 #include <sstream>
 #include <sys/wait.h>
 #include <sys/time.h>
@@ -44,28 +45,25 @@ inline pid_t racer_fork(double work_time) {
 }
 
 
-// racer_status(waitresult, status)
+// racer_status(elapsed, waitresult, status)
 //    Return human-readable information about the race.
 
-inline std::string racer_status(pid_t waitresult, int status) {
+inline std::string racer_status(double elapsed, pid_t waitresult, int status) {
     extern bool verbose;
     if (!verbose) {
         return "";
-    }
-    std::stringstream ss;
-    if (waitresult == -1) {
-        ss << " (parent interrupted by " << strerror(errno) << ")";
+    } else if (waitresult == -1) {
+        return std::format(" {:.06f} (parent interrupted by {})", elapsed, strerror(errno));
     } else if (waitresult == 0) {
-        ss << " (child did not exit in time)";
+        return std::format(" {:.06f} (child has not exited)", elapsed);
     } else if (WIFEXITED(status)) {
         if (WEXITSTATUS(status) == 0) {
-            return "";
+            return std::format(" {:.06f}", elapsed);
         }
-        ss << " (child exited with status " << WEXITSTATUS(status) << ")";
+        return std::format(" {:.06f} (child exited with status {})", elapsed, WEXITSTATUS(status));
     } else {
-        ss << " (child terminated abnormally)";
+        return std::format(" {:.06f} (child terminated abnormally)", elapsed);
     }
-    return ss.str();
 }
 
 

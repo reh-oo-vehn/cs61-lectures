@@ -31,8 +31,8 @@ int main(int argc, char** argv) {
     pid_t wp = waitpid(p1, &status, 0);
     double elapsed = timestamp() - start_time;
     if (elapsed >= timeout) {
-        printf("SLOW %.06f%s\n", elapsed, racer_status(wp, status).c_str());
+        printf("SLOW%s\n", racer_status(elapsed, wp, status).c_str());
     } else {
-        printf("quick %.06f%s\n", elapsed, racer_status(wp, status).c_str());
+        printf("quick%s\n", racer_status(elapsed, wp, status).c_str());
     }
 }
