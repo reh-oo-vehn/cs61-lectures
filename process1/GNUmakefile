@@ -16,10 +16,13 @@ include ../common/rules.mk
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(DEPCFLAGS) $(O) -o $@ -c $<
 
 processex fork1 fork2 fork3 forkmix syscall-forkmix forkorder minishell \
-makezombies pipesizer selfpipe childpipe waitdemo \
+makezombies pipesizer selfpipe childpipe waitdemo: \
+%: %.o print_bytes.o
+	$(CXX) $(CXXFLAGS) $(O) $(LDFLAGS) -o $@ $^ $(LIBS)
+
 racer-poll racer-block racer-blockvar racer-selfpipe \
 racer-alarm racer-selectpipe racer-signalfd racer-threads racer-waitblockwait: \
-%: %.o print_bytes.o
+%: %.o racer.o print_bytes.o
 	$(CXX) $(CXXFLAGS) $(O) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 
