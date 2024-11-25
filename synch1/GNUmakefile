@@ -2,7 +2,8 @@ PROGRAMS = threadex1 threadex2 threadex3 threadref threadjoin \
 	threadstack \
 	incr-atomic incr-basic incr-basic-noopt incr-mutex \
 	incr-scopedlock incr-spinlock incr-spinlock2 \
-	incr-trymutex incr-volatile incr-atomicbad
+	incr-trymutex incr-volatile incr-atomicbad \
+	spinlock-fairness
 
 all: $(PROGRAMS)
 
